@@ -51,7 +51,7 @@ class EMongoSession extends CHttpSession
 		$db=$this->getDbConnection();
 
 		$row = $db->{$this->sessionTableName}->findOne(array('id'=>$oldID));
-		if($row!==false)
+		if($row) // $row should either be a truey value or a falsey value
 		{
 			if($deleteOldSession)
 				$db->{$this->sessionTableName}->update(array('id'=>$oldID),array('$set'=>array('id'=>$newID)));
@@ -81,7 +81,7 @@ class EMongoSession extends CHttpSession
 			return $this->_db;
 		elseif(($id=$this->connectionID)!==null)
 		{
-			if(($this->_db=Yii::app()->getComponent($id)) instanceof CDbConnection)
+			if(($this->_db=Yii::app()->getComponent($id)) instanceof EMongoClient)
 				return $this->_db;
 			else
 				throw new CException(Yii::t('yii','EMongoSession.connectionID "{id}" is invalid. Please make sure it refers to the ID of a EMongoClient application component.',
@@ -135,17 +135,11 @@ class EMongoSession extends CHttpSession
 		{
 			$expire=time()+$this->getTimeout();
 			$db=$this->getDbConnection();
-			if($db->{$this->sessionTableName}->findOne(array('id'=>$id))===null)
-				$db->{$this->sessionTableName}->insert(array(
-					'id'=>$id,
-					'data'=>$data,
-					'expire'=>$expire,
-				));
-			else
-				$db->{$this->sessionTableName}->update(array('id'=>$id), array('$set' => array(
-					'data'=>$data,
-					'expire'=>$expire
-				)));
+			$res=$db->{$this->sessionTableName}->update(array('id'=>$id), array('$set' => array(
+				'data'=>$data,
+				'expire'=>$expire
+			)), array('upsert'=>true));
+			return ((isset($res['upserted'])&&$res['upserted'])||(isset($res['updatedExisting'])&&$res['updatedExisting']));
 		}
 		catch(Exception $e)
 		{

@@ -1011,7 +1011,7 @@ class EMongoDocument extends EMongoModel{
 	 * @param array $project
 	 * @return EMongoDataProvider
 	 */
-	public function search($query = array(), $project = array(), $partialMatch=false){
+	public function search($query = array(), $project = array(), $partialMatch=false, $sort = array()){
 		$this->trace(__FUNCTION__);
 
 		foreach($this->getSafeAttributeNames() as $attribute){
@@ -1060,7 +1060,7 @@ class EMongoDocument extends EMongoModel{
 				}
 			}
 		}
-		return new EMongoDataProvider($this, array('criteria' => array('condition' => $query, 'project' => $project)));
+		return new EMongoDataProvider($this, array('criteria' => array('condition' => $query, 'project' => $project, 'sort' => $sort)));
 	}
 
 	/**
