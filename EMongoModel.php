@@ -171,6 +171,7 @@ class EMongoModel extends CModel{
 	/**
 	 * Finds out if a document attributes actually exists
 	 * @param string $name
+	 * @return bool
 	 */
 	public function hasAttribute($name)
 	{
@@ -198,6 +199,7 @@ class EMongoModel extends CModel{
 	 * Sets the attribute of the model
 	 * @param string $name
 	 * @param mixed $value
+	 * @return bool
 	 */
 	public function setAttribute($name,$value){
 
@@ -215,6 +217,7 @@ class EMongoModel extends CModel{
 	/**
 	 * Gets a document attribute
 	 * @param string $name
+	 * @return \EMongoArrayModel|mixed|null
 	 */
 	public function getAttribute($name){
 		if(property_exists($this,$name))

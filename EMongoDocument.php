@@ -10,7 +10,7 @@ class EMongoDocument extends EMongoModel{
 	/**
 	 * Holds a set of cached models for the active record to instantiate from
 	 *
-	 * Whenever you call ::model() it will either find the class in this cache arrray and use it or will
+	 * Whenever you call ::model() it will either find the class in this cache array and use it or will
 	 * make a whole new class and cache it into this array
 	 *
 	 * @var array
@@ -107,7 +107,7 @@ class EMongoDocument extends EMongoModel{
 	 * 	)
 	 * )
 	 *
-	 * Not all params need to be defined they are all just there above to give an indea of how to use this
+	 * Not all params need to be defined they are all just there above to give an idea of how to use this
 	 *
 	 * @return array
 	 */
@@ -645,7 +645,7 @@ class EMongoDocument extends EMongoModel{
 				$version=$this->{$this->versionField()};
 				$attributes[$this->versionField()]=$this->{$this->versionField()}=$this->{$this->versionField()}>0?$this->{$this->versionField()}+1:1;
 
-				if($partial===true){ // If this is a partial docuemnt we use $set to replace that partial view
+				if($partial===true){ // If this is a partial document we use $set to replace that partial view
 					$attributes=array('$set' => $attributes);
 					if(!isset($this->_projected_fields[$this->versionField()]))
 						// We cannot rely on a partial document containing the version
@@ -654,7 +654,7 @@ class EMongoDocument extends EMongoModel{
 				}
 				$this->lastError = $this->updateAll(array($this->primaryKey() => $this->getPrimaryKey(), $this->versionField() => $version),$attributes,array('multiple'=>false));
 			}else{
-				if($partial===true) // If this is a partial docuemnt we use $set to replace that partial view
+				if($partial===true) // If this is a partial document we use $set to replace that partial view
 					$attributes=array('$set' => $attributes);
 				$this->lastError = $this->updateByPk($this->getPrimaryKey(), $attributes);
 			}
@@ -1169,7 +1169,7 @@ class EMongoDocument extends EMongoModel{
 	}
 
 	/**
-	 * Merges the currrent DB Criteria with the inputted one
+	 * Merges the current DB Criteria with the inputted one
 	 * @param array|EMongoCriteria $newCriteria
 	 * @return array
 	 */
@@ -1207,7 +1207,7 @@ class EMongoDocument extends EMongoModel{
 	}
 
 	/**
-	 * This does our prfiling. There is a reason why this isn't like Yiis own and it is because MongoDB queries are not
+	 * This does our profiling. There is a reason why this isn't like Yiis own and it is because MongoDB queries are not
 	 * inline as such doing it stepped like in CDbCommand would be pointless. This function acts as nothing more than a log
 	 * to be compatible with certain extensions tbh.
 	 * @param string $token
