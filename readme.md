@@ -7,6 +7,7 @@ Another active record handler for the Yii framework that supports MongoDB.
 This fork adds some useful features:
 - lazy autoloading of subDocuments
 - write concern behavior
+- audit behavior
 
 ## Rationale
 
