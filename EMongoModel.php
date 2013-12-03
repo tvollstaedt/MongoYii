@@ -395,7 +395,7 @@ class EMongoModel extends CModel{
 		// Let's get the parts of the relation to understand it entirety of its context
 		$cname = $relation[1];
 		$fkey = $relation[2];
-		$pk = isset($relation['on']) ? $this->{$relation['on']} : $this->getPrimaryKey();
+		$pk = isset($relation['on']) ? $this->{$relation['on']} : $this->{$this->primaryKey()};
 
 		// Form the where clause
 		$where = array();
