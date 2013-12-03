@@ -1,13 +1,16 @@
 {
-    "name": "sammaye/mongoyii",
-    "description": "A Yii MongoDB ORM",
+    "name": "pahanini/mongoyii",
+    "description": "A Yii MongoDB ORM with lazy autoloading of subdocuments",
     "keywords": ["mongodb","orm","yii"],
     "type": "yii-extension",
     "license": "BSD-3-Clause",
     "authors": [
         {
-            "name": "Sammaye",
-            "homepage": "http://sammaye.wordpress.com"
+            "name": "Pahanini",
+            "homepage": "github.com/pahanini"
         }
-    ]
+    ],
+    "autoload": {
+        "classmap": ["./"]
+    }
 }
