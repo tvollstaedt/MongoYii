@@ -18,6 +18,9 @@ return CMap::mergeArray(
 					)
 				)
 			),
+			'authManager' => array(
+				'class' => 'EMongoAuthManager',
+			),
         ),
     )
 );

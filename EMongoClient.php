@@ -104,10 +104,9 @@ class EMongoClient extends CApplicationComponent{
 	 * @return mixed
 	 */
 	public function __call($name,$parameters = array()){
-		if(method_exists($this->getDB(), $name)) {
-			return call_user_func_array(array($this->getDB(), $name), $parameters);
-		}
-		parent::__call($name, $parameters);
+		if(!method_exists($this->getDB(), $name))
+			return parent::__call($name, $parameters);
+		return call_user_func_array(array($this->getDB(), $name), $parameters);
 	}
 
 	public function __construct(){
