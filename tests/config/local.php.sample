@@ -6,6 +6,7 @@ return
 			'application.*',
 			'application.validators.*',
 			'application.behaviors.*',
+			'application.util.*',
 		),
         'components'=>array(
 			'mongodb' => array(
@@ -22,6 +23,9 @@ return
 						)
 					)
 				)
+			),
+			'authManager' => array(
+				'class' => 'EMongoAuthManager',
 			),
         ),
     );
