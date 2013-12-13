@@ -5,7 +5,7 @@
  * Helps to work with audit data
  *
  */
-class EMongoAuditModel extends EMongoDocument
+class EMongoAuditDocument extends EMongoDocument
 {
 	public $date;
 	public $data;

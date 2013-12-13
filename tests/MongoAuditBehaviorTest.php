@@ -28,15 +28,15 @@ class MongoAuditBehaviorTest extends CTestCase{
 		$b = new EMongoAuditBehavior();
 		$user->attachBehavior('audit', $b);
 		$user->username = 'Mike';
-		EMongoAuditModel::model()->deleteAll();
+		EMongoAuditDocument::model()->deleteAll();
 
 		// then
 		$this->assertTrue($user->save());
 
 		// when
-		$this->assertEquals(1, EMongoAuditModel::model()->find()->count());
-		$audit = EMongoAuditModel::model()->findOne();
-		$this->assertInstanceOf('EMongoAuditModel', $audit);
+		$this->assertEquals(1, EMongoAuditDocument::model()->find()->count());
+		$audit = EMongoAuditDocument::model()->findOne();
+		$this->assertInstanceOf('EMongoAuditDocument', $audit);
 		$this->assertEquals('i', $audit->op);
 		$this->assertEquals('users', $audit->name);
 
@@ -45,9 +45,9 @@ class MongoAuditBehaviorTest extends CTestCase{
 		$user->save();
 
 		// when
-		$this->assertEquals(2, EMongoAuditModel::model()->find()->count());
-		$audit = EMongoAuditModel::model()->find()->limit(1)->sort(array('date' => -1))->getNext();
-		$this->assertInstanceOf('EMongoAuditModel', $audit);
+		$this->assertEquals(2, EMongoAuditDocument::model()->find()->count());
+		$audit = EMongoAuditDocument::model()->find()->limit(1)->sort(array('date' => -1))->getNext();
+		$this->assertInstanceOf('EMongoAuditDocument', $audit);
 		$this->assertEquals('u', $audit->op);
 
 		// then
@@ -55,9 +55,9 @@ class MongoAuditBehaviorTest extends CTestCase{
 		$user->delete();
 
 		// then
-		$this->assertEquals(3, EMongoAuditModel::model()->find()->count());
-		$audit = EMongoAuditModel::model()->find()->limit(1)->sort(array('date' => -1))->getNext();
-		$this->assertInstanceOf('EMongoAuditModel', $audit);
+		$this->assertEquals(3, EMongoAuditDocument::model()->find()->count());
+		$audit = EMongoAuditDocument::model()->find()->limit(1)->sort(array('date' => -1))->getNext();
+		$this->assertInstanceOf('EMongoAuditDocument', $audit);
 		$this->assertEquals('d', $audit->op);;
 		$this->assertEquals($raw, $audit->data);
 	}
