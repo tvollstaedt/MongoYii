@@ -58,23 +58,23 @@ class EMongoAuditBehavior extends CActiveRecordBehavior {
 
 	/**
 	 * Returns recursive difference between two arrays
-	 * @param $new
 	 * @param $old
+	 * @param $new
 	 * @return array
 	 */
-	public function getDiff($new, $old){
+	public function getDiff($old, $new){
 		$result = array();
-		foreach ($old as $key => $value) {
+		foreach ($new as $key => $value) {
 			if (is_array($value)) {
-				if (!isset($new[$key]) || !is_array($new[$key])) {
+				if (!isset($old[$key]) || !is_array($old[$key])) {
 					$result[$key] = $value;
 				} else {
-					$new_diff = $this->getDiff($value, $new[$key]);
+					$new_diff = $this->getDiff($value, $old[$key]);
 					if (!empty($new_diff)) {
 						$result[$key] = $new_diff;
 					}
 				}
-			} elseif (!array_key_exists($key, $new) || $new[$key] !== $value) {
+			} elseif (!array_key_exists($key, $old) || $old[$key] !== $value) {
 				$result[$key] = $value;
 			}
 		}
