@@ -5,18 +5,32 @@
  * Helps to work with audit data
  *
  */
-class EMongoAuditModel extends EMongoDocument
+class EMongoAuditDocument extends EMongoDocument
 {
+	/**
+	 * @var MongoDate date of modification
+	 */
 	public $date;
+
+	/**
+	 * @var array modified data
+	 */
 	public $data;
+
+	/**
+	 * @var string collection name
+	 */
 	public $name;
-	public $op;
-	public $user;
 
 	/**
 	 * @var string operation: (i)nsert, (u)pdate, (d)elete
 	 */
-	public $operation;
+	public $op;
+
+	/**
+	 * @var array user info
+	 */
+	public $user;
 
 	public function collectionName()
 	{
