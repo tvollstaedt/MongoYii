@@ -62,13 +62,19 @@
  */
 class EMongoArrayModel implements Iterator, Countable, ArrayAccess {
 
-	private $_sortColumn;
-	private $_sortOrder;
+	/**
+	 * @var null|string index name
+	 */
+	private $_indexName=null;
 
 	/**
 	 * @var array index=>key map
 	 */
-	private $map;
+	private $_map = null;
+
+	private $_sortColumn;
+	private $_sortOrder;
+
 
 	/**
 	 * @var string Model class
@@ -91,11 +97,6 @@ class EMongoArrayModel implements Iterator, Countable, ArrayAccess {
 	private $values = array();
 
 	/**
-	 * @var null|string index name
-	 */
-	private $index=null;
-
-	/**
 	 * The constructor
 	 *
 	 * @param $modelClass
@@ -114,7 +115,7 @@ class EMongoArrayModel implements Iterator, Countable, ArrayAccess {
 			$this->modelClass=$modelClass;
 		}
 		$this->populate($values);
-		$this->index=$index;
+		$this->_indexName=$index;
 	}
 
 	/**
@@ -125,14 +126,12 @@ class EMongoArrayModel implements Iterator, Countable, ArrayAccess {
 	}
 
 	/**
-	 * @ignore
+	 * @deprecated
 	 */
-	public function createMap() {
-		$this->map=array();
-		foreach($this->values as $key=>$val)
-			$this->map[$this->getIndex($val)]=$key;
+	public function createMap()
+	{
+		$this->getMap($true);
 	}
-
 
 	/**
 	 * @return \EMongoModel|mixed EMongoModel for the current row or false
@@ -152,35 +151,42 @@ class EMongoArrayModel implements Iterator, Countable, ArrayAccess {
 	public function getIndex(&$value, $defaultValue=false)
 	{
 		if (is_object($value))
-			if (empty($value->{$this->index}))
+			if (empty($value->{$this->_indexName}))
 				if ($defaultValue===false)
-					throw new EMongoException(Yii::t('yii','class {className} has empty index attribute {index}',
-						array('{$className}'=>$this->modelClass, '{index}' => $this->index)));
+					throw new EMongoException(Yii::t('yii','class {className} has empty index attribute {indexName}',
+						array('{$className}'=>$this->modelClass, '{indexName}' => $this->_indexName)));
 				else
-					return $value->{$this->index}=$defaultValue;
+					return $value->{$this->_indexName}=$defaultValue;
 			else
-				return $value->{$this->index};
+				return $value->{$this->_indexName};
 		if (is_array($value))
-			if (empty($value[$this->index]))
+			if (empty($value[$this->_indexName]))
 				if ($defaultValue===false)
-					throw new EMongoException(Yii::t('yii','array has empty key {index}',
-						array('{index}' => $this->index)));
+					throw new EMongoException(Yii::t('yii','array has empty key {indexName}',
+						array('{indexName}' => $this->_indexName)));
 				else
-					return $value[$this->index]=$defaultValue;
+					return $value[$this->_indexName]=$defaultValue;
 			else
-				return $value[$this->index];
+				return $value[$this->_indexName];
 		throw new EMongoException(Yii::t('yii','Value of subDocument must have array or EMongoArrayModel type.'));
+	}
+
+	/**
+	 * @return null|string returns name of index attribute
+	 */
+	public function getIndexName()
+	{
+		return $this->_indexName;
 	}
 
 	/**
 	 * @returns null|key in subdocument array
 	 */
 	protected function getKey($offset) {
-		if (!$this->index)
+		if (!$this->_indexName)
 			return $offset;
-		if ($this->map===null)
-			$this->createMap();
-		return isset($this->map[$offset]) ? $this->map[$offset] : null;
+		$map = $this->getMap();
+		return isset($map[$offset]) ? $map[$offset] : null;
 	}
 
 	/**
@@ -198,6 +204,24 @@ class EMongoArrayModel implements Iterator, Countable, ArrayAccess {
 			$this->values[$key]=$val;
 		}
 		return $this->values[$key];
+	}
+
+	/**
+	 * @param bool $reset
+	 * @throws EMongoException
+	 * @return array|null
+	 */
+	public function getMap($reset = false) {
+		if ($this->_indexName === null) {
+			throw new EMongoException(Yii::t('yii','Trying to call getMap for EMongoArrayModel without indexName'));
+		}
+		if ($this->_map === null || $reset) {
+			$this->_map=array();
+			foreach($this->values as $key=>$val) {
+				$this->_map[$this->getIndex($val)]=$key;
+			}
+		}
+		return $this->_map;
 	}
 
 	/**
@@ -245,13 +269,13 @@ class EMongoArrayModel implements Iterator, Countable, ArrayAccess {
 	 * @throws EMongoException
 	 */
 	public function offsetSet($offset, $value) {
-		if ($this->index){
+		if ($this->_indexName){
 			$offset=$this->getIndex($value,$offset);
 			if($this->offsetExists($offset)){
 				$this->values[$this->getKey($offset)]=$value;
 			}else{
-				if ($this->map!==null)
-					$this->map[$offset]=count($this->values);
+				if ($this->_map!==null)
+					$this->_map[$offset]=count($this->values);
 			}
 		}
 		$this->values[]=$value;
@@ -265,17 +289,17 @@ class EMongoArrayModel implements Iterator, Countable, ArrayAccess {
 		unset($this->values[$key]);
 		$this->values=array_values($this->values);
 		$this->pointer=0;
-		if ($this->index)
-			$this->map=null;
+		if ($this->_indexName)
+			$this->_map=null;
 	}
 
 	/**
 	 * @param $val
 	 */
 	public function populate($val) {
-		if ($this->index) foreach($val as $k=>$v) $this->getIndex($val[$k],$k);
+		if ($this->_indexName) foreach($val as $k=>$v) $this->getIndex($val[$k],$k);
 		$this->values=array_values($val);
-		$this->map=null;
+		$this->_map=null;
 		$this->pointer=0;
 	}
 
@@ -291,7 +315,7 @@ class EMongoArrayModel implements Iterator, Countable, ArrayAccess {
 	 */
 	public function setValues($array) {
 		$this->values=$array;
-		$this->isIndexed=$this->index===null;
+		$this->isIndexed=$this->_indexName===null;
 	}
 
 	/**
