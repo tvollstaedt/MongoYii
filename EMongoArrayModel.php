@@ -130,7 +130,7 @@ class EMongoArrayModel implements Iterator, Countable, ArrayAccess {
 	 */
 	public function createMap()
 	{
-		$this->getMap($true);
+		$this->getMap(true);
 	}
 
 	/**
