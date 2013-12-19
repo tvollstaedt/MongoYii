@@ -21,6 +21,11 @@ class EMongoAuditBehavior extends CActiveRecordBehavior {
 	public $collectionName = 'audit';
 
 	/**
+	 * @var array key names to included in diff if any other keys are of different
+	 */
+	public $include = array();
+
+	/**
 	 * @var array list of Yii::app()->user component properties to save in log
 	 */
 	public $user = array('id');
@@ -30,7 +35,7 @@ class EMongoAuditBehavior extends CActiveRecordBehavior {
 	 */
 	public function afterDelete($event){
 		$record = array();
-		$record['data'] = $this->_oldAttributes;
+		$record['data'] = null;
 		$record['op'] = 'd';
 		$this->save($record);
 	}
@@ -39,7 +44,7 @@ class EMongoAuditBehavior extends CActiveRecordBehavior {
 	 * @param CEvent $event
 	 */
 	public function afterFind($event){
-		$this->_oldAttributes = $this->getOwner()->getRawDocument();
+		$this->_oldAttributes = $this->getClone($this->getOwner()->getAttributes());
 	}
 
 	/**
@@ -49,7 +54,7 @@ class EMongoAuditBehavior extends CActiveRecordBehavior {
 		/** @var  $owner EMongoDocument */
 		$owner = $this->getOwner();
 		$record = array();
-		$newAttributes = $owner->getRawDocument();
+		$newAttributes = $this->getClone($owner->getAttributes());
 		$record['data'] = $this->getDiff($this->_oldAttributes, $newAttributes);
 		$record['op'] = $owner->getIsNewRecord() ? 'i' : 'u';
 		$this->_oldAttributes = $newAttributes;
@@ -57,28 +62,143 @@ class EMongoAuditBehavior extends CActiveRecordBehavior {
 	}
 
 	/**
-	 * Returns recursive difference between two arrays
-	 * @param $old
-	 * @param $new
-	 * @return array
+	 * @param $val
+	 * @return array|null
 	 */
-	public function getDiff($old, $new){
+	private function getAsArray($val) {
+		if ($val instanceof EMongoModel) {
+			return $val->getAttributes();
+		}
+		if ($val instanceof EMongoArrayModel) {
+			return $val->getIndexedRawValues();
+		}
+		return $val;
+	}
+
+	/**
+	 * @param $attributes
+	 * @return array
+	 * @ignore
+	 */
+	private function getClone($attributes)
+	{
 		$result = array();
-		foreach ($new as $key => $value) {
-			if (is_array($value)) {
-				if (!isset($old[$key]) || !is_array($old[$key])) {
-					$result[$key] = $value;
-				} else {
-					$new_diff = $this->getDiff($value, $old[$key]);
-					if (!empty($new_diff)) {
-						$result[$key] = $new_diff;
-					}
-				}
-			} elseif (!array_key_exists($key, $old) || $old[$key] !== $value) {
-				$result[$key] = $value;
+		foreach ($attributes as $key => $val) {
+			if ($val instanceof EMongoArrayModel) {
+				$val = clone $val;
+			}
+			if (is_array($val) || ($val instanceof ArrayAccess)) {
+				$result[$key] = $this->getClone($val);
+			} else {
+				$result[$key] = $val;
 			}
 		}
 		return $result;
+	}
+
+
+	/**
+	 * Calculates recursive difference between two arrays, array values can be any type
+	 *
+	 * @param array $old
+	 * @param array $new
+	 * @param null $indexName
+	 * @return array
+	 */
+	private function getDiffArray(array $old, array $new, $indexName=null)
+	{
+		$result = array();
+		foreach ($new as $key => $newValue) {
+			// newValue does not exist in old array
+			if (!array_key_exists($key, $old)) {
+				$result[$key] = $newValue;
+				continue;
+			}
+			// Convert EMongoArrayModels with empty index to arrays
+			$oldValue = $old[$key];
+			if ($newValue instanceof EMongoArrayModel && !$newValue->getIndexName()) {
+				$newValue = $newValue->getRawValues();
+			}
+			if ($oldValue instanceof EMongoArrayModel && !$oldValue->getIndexName()) {
+				$oldValue = $oldValue->getRawValues();
+			}
+			// Convert EMongoModels to arrays
+			if ($newValue instanceof EMongoModel) {
+				$newValue = $newValue->getAttributes();
+			}
+			if ($oldValue instanceof EMongoModel) {
+				$oldValue = $oldValue->getAttributes();
+			}
+			// newValue is array
+			if (is_array($newValue)) {
+				if (is_array($oldValue)) {
+					if ($diff = $this->getDiffArray($oldValue, $newValue)) {
+						if ($indexName) {
+							if (array_key_exists($indexName, $newValue)) {
+								$diff[$indexName] = $newValue[$indexName];
+							} elseif (array_key_exists($indexName, $oldValue)) {
+								$diff[$indexName] = $oldValue[$indexName];
+							}
+						}
+						$result[$key] = $diff;
+					}
+				} else {
+					$result[$key] = $newValue;
+				}
+				continue;
+			}
+			// newValue is EMongoArrayModel with not empty index (empty indexes was converted to arrays at prev. step)
+			if ($newValue instanceof EMongoArrayModel) {
+				if ($oldValue instanceof EMongoArrayModel && $oldValue->getIndexName() == $newValue->getIndexName()) {
+					if ($diff = $this->getDiffArray($oldValue->getIndexedRawValues(), $newValue->getIndexedRawValues(), $newValue->getIndexName())) {
+						foreach ($diff as $diffKey => $diffVal) {
+							$diff[$diffKey][$newValue->getIndexName()]=$diffKey;
+						}
+						$result[$key] = array_values($diff);
+					}
+				} else {
+					$result[$key] = $newValue;
+				}
+				continue;
+			}
+			// Scalar values
+			if ($oldValue !== $newValue) {
+				$result[$key] = $newValue;
+			}
+		}
+
+		// mark removed keys with null
+		$newKeys = array_keys($new);
+		$oldKeys = array_keys($old);
+		if ($oldDeleted = array_diff($oldKeys,$newKeys)) {
+			foreach ($oldDeleted as $key) {
+				$result[$key] = null;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Returns recursive difference between two sets of attributes
+	 * @param EMongoModel|array|EArrayMongoModel $old
+	 * @param EMongoModel|array|EArrayMongoModel $new
+	 * @return array|null
+	 */
+	public function getDiff($old, $new) {
+		$old = $this->getAsArray($old);
+		$new = $this->getAsArray($new);
+		if (is_array($old) &&  is_array($new)) {
+			$result = $this->getDiffArray($old, $new);
+		} else {
+			if ($old !== $new) {
+				return $new;
+			} else {
+				return null;
+			}
+		}
+		$tmp = new EMongoModel();
+		return $tmp->filterRawDocument($result);
 	}
 
 	/**

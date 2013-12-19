@@ -7,17 +7,82 @@ class MongoAuditBehaviorTest extends CTestCase{
 	public function testDiff()
 	{
 		$audit = new EMongoAuditBehavior();
+
+		// then
 		$a = new User;
 		$a->username = 'a';
 		$b = new User;
 		$b->username = 'b';
 		$b->phones[] = array('num' => 101, 'comment' => 'comment101');
+
+		// when
 		$this->assertEquals(array(
 			'username' => 'b',
 			'phones' => array(
 				array('num' => 101, 'comment' => 'comment101')
 			)),
-			$audit->getDiff($a->getRawDocument(), $b->getRawDocument())
+			$audit->getDiff($a->getAttributes(), $b->getAttributes())
+		);
+		$this->assertEquals(array(
+				'username' => 'a',
+				'phones' => null),
+			$audit->getDiff($b->getAttributes(), $a->getAttributes())
+		);
+
+		// then
+		$a->phones[] = array('num' => 101);
+
+		// when
+		$this->assertEquals(array(
+				'username' => 'b',
+				'phones' => array(
+					array('num' => 101, 'comment' => 'comment101')
+				)),
+			$audit->getDiff($a->getAttributes(), $b->getAttributes())
+		);
+
+		$this->assertEquals(array(
+				'username' => 'a',
+				'phones' => array(
+					array('num' => 101, 'comment' => null)
+				)),
+			$audit->getDiff($b->getAttributes(), $a->getAttributes())
+		);
+
+
+		// then
+		$c = new User;
+		$c->username = 'c';
+		$c->phones[] = array('num' => 101, 'comment' => 'comment101c');
+
+		// when
+		$this->assertEquals(array(
+				'username' => 'c',
+				'phones' => array(
+					array('num' => 101, 'comment' => 'comment101c')
+				)),
+			$audit->getDiff($b->getAttributes(), $c->getAttributes())
+		);
+
+		// difficult case 2 keys were deleted
+		// then
+		$d = new User();
+		$d->username = 'd';
+		$d->phones[]=array('num' => 101, 'comment' => 'comment101');
+		$e = new User();
+		$e->username = 'e';
+		$e->phones[]=array('num' => 101, 'comment' => 'comment101');
+		$e->phones[]=array('num' => 102, 'comment' => 'comment102');
+		$e->phones[]=array('num' => 103, 'comment' => 'comment103');
+
+		// when
+		$this->assertEquals(array(
+				'username' => 'd',
+				'phones' => array(
+					array('num' => 102),
+					array('num' => 103)
+				)),
+			$audit->getDiff($e->getAttributes(), $d->getAttributes())
 		);
 	}
 
@@ -51,7 +116,6 @@ class MongoAuditBehaviorTest extends CTestCase{
 		$this->assertEquals('u', $audit->op);
 
 		// then
-		$raw = $user->getRawDocument();
 		$user->delete();
 
 		// then
@@ -59,6 +123,6 @@ class MongoAuditBehaviorTest extends CTestCase{
 		$audit = EMongoAuditDocument::model()->find()->limit(1)->sort(array('date' => -1))->getNext();
 		$this->assertInstanceOf('EMongoAuditDocument', $audit);
 		$this->assertEquals('d', $audit->op);;
-		$this->assertEquals($raw, $audit->data);
+		$this->assertEquals(null, $audit->data);
 	}
 }

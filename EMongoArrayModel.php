@@ -172,6 +172,24 @@ class EMongoArrayModel implements Iterator, Countable, ArrayAccess {
 	}
 
 	/**
+	 * @param bool $reset
+	 * @return array|null array of values (assoc array if indexName is set)
+	 */
+	public function getIndexedRawValues($reset=false)
+	{
+		$values = $this->getRawValues();
+		if ($this->getIndexName()) {
+			$map = $this->getMap($reset);
+			$result = array();
+			foreach ($map as $key => $value) {
+				$result[$key] = isset($this->values[$value]) ? $this->values[$value] : false;
+			}
+			return $result;
+		}
+		return $values;
+	}
+
+	/**
 	 * @return null|string returns name of index attribute
 	 */
 	public function getIndexName()
@@ -304,7 +322,7 @@ class EMongoArrayModel implements Iterator, Countable, ArrayAccess {
 	}
 
 	/**
-	 * Resets intrnal pointer
+	 * Resets internal pointer
 	 */
 	public function rewind() {
 		$this->pointer=0;
