@@ -95,7 +95,7 @@ class EMongoAuditBehavior extends CActiveRecordBehavior {
 			if ($val instanceof EMongoArrayModel) {
 				$val = clone $val;
 			}
-			if (is_array($val) || ($val instanceof ArrayAccess)) {
+			if (is_array($val)) {
 				$result[$key] = $this->getClone($val);
 			} else {
 				$result[$key] = $val;
