@@ -62,6 +62,14 @@ class EMongoAuditBehavior extends CActiveRecordBehavior {
 	}
 
 	/**
+	 * @param CComponent $owner
+	 */
+	public function attach($owner){
+		parent::attach($owner);
+		$this->afterSave(null);
+	}
+
+	/**
 	 * @param $val
 	 * @return array|null
 	 */
