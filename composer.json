@@ -15,6 +15,7 @@
     		"./behaviors",
     		"./util",
     		"./validators",
+			"./EMongoArrayModel.php",
     		"./EMongoClient.php",
     		"./EMongoCriteria.php",
     		"./EMongoCursor.php",
