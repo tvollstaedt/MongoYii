@@ -4,6 +4,30 @@ require_once 'bootstrap.php';
 
 class MongoAuditBehaviorTest extends CTestCase{
 
+	public function testSave()
+	{
+		User::model()->deleteAll();
+		EMongoAuditDocument::model()->deleteAll();
+
+		$user = new User();
+		$user->attachBehavior('audit', 'EMongoAuditBehavior');
+		$user->phones[] = array('num' => 911, 'comment' => 'Comment');
+		$this->assertTrue($user->save());
+
+		$user = User::model()->findOne();
+		$user->attachBehavior('audit', 'EMongoAuditBehavior');
+		$user->phones[911]->comment = 'Comment2';
+		$this->assertTrue($user->save());
+
+		$audit = EMongoAuditDocument::model()->find();
+		$this->assertEquals(2, $audit->count());
+		$audit = $audit->skip(1)->getNext();
+		$this->assertEquals(array(
+			array('num' => 911, 'comment' => 'Comment2')
+		), $audit->data['phones']);
+		$this->assertInstanceOf('MongoId', $audit->data['_id']);
+	}
+
 	public function testDiff()
 	{
 		$audit = new EMongoAuditBehavior();
@@ -48,7 +72,6 @@ class MongoAuditBehaviorTest extends CTestCase{
 				)),
 			$audit->getDiff($b->getAttributes(), $a->getAttributes())
 		);
-
 
 		// then
 		$c = new User;

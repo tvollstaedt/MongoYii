@@ -23,7 +23,7 @@ class EMongoAuditBehavior extends CActiveRecordBehavior {
 	/**
 	 * @var array key names to included in diff if any other keys are of different
 	 */
-	public $include = array();
+	public $include = array('_id');
 
 	/**
 	 * @var array list of Yii::app()->user component properties to save in log
@@ -203,6 +203,11 @@ class EMongoAuditBehavior extends CActiveRecordBehavior {
 				return $new;
 			} else {
 				return null;
+			}
+		}
+		foreach ($this->include as $val) {
+			if (isset($new[$val])) {
+				$result[$val] = $new[$val];
 			}
 		}
 		$tmp = new EMongoModel();
