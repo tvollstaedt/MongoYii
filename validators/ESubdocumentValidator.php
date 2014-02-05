@@ -49,13 +49,15 @@ class ESubdocumentValidator extends CValidator{
 		}
 
 		if($this->type == 'many'){
-			if(is_array($object->$attribute)){
+			if(is_array($object->$attribute) || ($object->$attribute instanceof EMongoArrayModel)){
 
 				$fieldErrors = array();
 				$fieldValue = array();
 				$newFieldValue = array();
 
-				foreach($object->$attribute as $index=>$row){
+				$array = $object->$attribute instanceof EMongoArrayModel ? $object->$attribute->getRawValues() : $object->$attribute;
+
+				foreach($array as $index=>$row){
 					$c->clean();
 					if($this->preserveKeys)
 						$val = $fieldValue[$index] = $row instanceof $c ? $row->getRawDocument() : $row;
@@ -68,13 +70,13 @@ class ESubdocumentValidator extends CValidator{
 						else
 							$fieldErrors[] = $c->getErrors();
 					}
-					
+
 					// Lets get the field value again to apply filters etc
 					if($this->strict){
 						if($this->preserveKeys)
-						    $newFieldValue[$index] = $c->getRawDocument();
+                            $newfieldValue[$index] = $row instanceof $c ? $row->getRawDocument() : $row;
 						else
-						    $newFieldValue[] = $c->getRawDocument();
+                            $newFieldValue[] = $row instanceof $c ? $row->getRawDocument() : $row;
 					}
 				}
 				
@@ -89,7 +91,9 @@ class ESubdocumentValidator extends CValidator{
 				}
 
 				// Strip the models etc from the field value
-				$object->$attribute = $newFieldValue;
+				// TODO: Solve this ASAP
+				$object->$attribute = $newFieldValue;	// upstream version (tests fail)
+				//$object->$attribute = $fieldValue; // old version (tests ok)
 			}
 		}else{
 			$c->clean();
@@ -102,7 +106,7 @@ class ESubdocumentValidator extends CValidator{
 					$this->setAttributeErrors($object, $attribute, $c->getErrors());
 				}
 			}
-			
+
 			// Lets get the field value again to apply filters etc
 			if($this->strict){
 				$fieldValue = $c->getRawDocument();

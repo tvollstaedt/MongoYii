@@ -10,7 +10,7 @@ class EMongoDocument extends EMongoModel{
 	/**
 	 * Holds a set of cached models for the active record to instantiate from
 	 *
-	 * Whenever you call ::model() it will either find the class in this cache arrray and use it or will
+	 * Whenever you call ::model() it will either find the class in this cache array and use it or will
 	 * make a whole new class and cache it into this array
 	 *
 	 * @var array
@@ -105,7 +105,7 @@ class EMongoDocument extends EMongoModel{
 	 * 	)
 	 * )
 	 *
-	 * Not all params need to be defined they are all just there above to give an indea of how to use this
+	 * Not all params need to be defined they are all just there above to give an idea of how to use this
 	 *
 	 * @return array
 	 */
@@ -1042,7 +1042,8 @@ class EMongoDocument extends EMongoModel{
 		foreach($this->getSafeAttributeNames() as $attribute){
 
 			$value = $this->{$attribute};
-			if ($value !== null && $value !== ''){
+
+			if ($value !== null && $value !== '' && (!$value instanceof EMongoArrayModel)){
 				if((is_array($value) && count($value)) || is_object($value) || is_bool($value)){
 					$query[$attribute] = $value;
 				}elseif(preg_match('/^(?:\s*(<>|<=|>=|<|>|=))?(.*)$/', $value, $matches)) {

@@ -1,7 +1,13 @@
 <?php
-return CMap::mergeArray(
-    require('../../../config/main.php'),
+return
     array(
+		'basePath' => dirname(__FILE__) . '/../..',
+		'import' => array(
+			'application.*',
+			'application.validators.*',
+			'application.behaviors.*',
+			'application.util.*',
+		),
         'components'=>array(
 			'mongodb' => array(
 				'class' => 'EMongoClient',
@@ -16,11 +22,10 @@ return CMap::mergeArray(
 							'critical' => array('w'=>2, 'j'=>true),
 						)
 					)
-				)
+				),
 			),
 			'authManager' => array(
 				'class' => 'EMongoAuthManager',
 			),
         ),
-    )
-);
+    );
