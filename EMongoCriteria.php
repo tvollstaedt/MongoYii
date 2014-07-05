@@ -70,6 +70,15 @@ class EMongoCriteria extends CComponent {
 	 * @return EMongoCriteria
 	 */
 	public function setSort(array $sort) {
+		
+		foreach($sort as $field => $order){
+			if($order === 'asc'){
+				$sort[$field] = 1;
+			}elseif($order === 'desc'){
+				$sort[$field] = -1;
+			}
+		}
+		
 		$this->_sort = CMap::mergeArray($sort, $this->_sort);
 		return $this;
 	}
@@ -176,7 +185,7 @@ class EMongoCriteria extends CComponent {
 	 * @return EMongoCriteria
 	 */
 	public function addOrCondition($condition){
-		$this->_condition['$or'] = $condition;
+		$this->_condition['$and'][] = array('$or' => $condition);
 		return $this;
 	}
 
@@ -188,12 +197,15 @@ class EMongoCriteria extends CComponent {
 	 * @return EMongoCriteria
 	 */
 	public function compare($column, $value = null, $partialMatch = false) {
-		if ($value === null)
-			return $this;
 		$query = array();
-		if(is_array($value)){
+		
+		if($value === null){
+			$query[$column] = null;
+		}elseif(is_array($value)){
 			$query[$column] = array('$in' => $value);
 		}elseif(is_object($value)){
+			$query[$column] = $value;
+		}elseif(is_bool($value)){
 			$query[$column] = $value;
 		}elseif(preg_match('/^(?:\s*(<>|<=|>=|<|>|=))?(.*)$/', $value, $matches)) {
 			$value = $matches[2];
